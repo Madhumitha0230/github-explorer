@@ -1,0 +1,475 @@
+ <!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>GitHub Explorer</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: Arial, sans-serif;
+      background: #0d1117;
+      color: #e6edf3;
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      padding: 40px 20px;
+    }
+
+    h1 {
+      color: #58a6ff;
+      font-size: 32px;
+      margin-bottom: 10px;
+    }
+
+    .subtitle {
+      color: #8b949e;
+      margin-bottom: 30px;
+    }
+
+    /* Login Button */
+    .login-btn {
+      background: #238636;
+      color: white;
+      border: none;
+      padding: 12px 24px;
+      border-radius: 8px;
+      font-size: 16px;
+      cursor: pointer;
+      text-decoration: none;
+      display: inline-block;
+      margin-bottom: 20px;
+    }
+
+    .login-btn:hover { background: #2ea043; }
+
+    /* Search Box */
+    .search-box {
+      display: flex;
+      gap: 10px;
+      margin-bottom: 20px;
+    }
+
+    input {
+      padding: 10px 16px;
+      border-radius: 8px;
+      border: 1px solid #30363d;
+      background: #161b22;
+      color: white;
+      font-size: 15px;
+      width: 250px;
+    }
+
+    button {
+      padding: 10px 20px;
+      background: #238636;
+      color: white;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      font-size: 15px;
+    }
+
+    button:hover { background: #2ea043; }
+
+    /* Cards */
+    .card {
+      background: #161b22;
+      border: 1px solid #30363d;
+      border-radius: 12px;
+      padding: 20px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    /* Profile */
+    .profile {
+      display: flex;
+      align-items: center;
+      gap: 20px;
+    }
+
+    .profile img {
+      width: 80px;
+      height: 80px;
+      border-radius: 50%;
+    }
+
+    .profile h2 { color: #58a6ff; }
+    .profile p  { color: #8b949e; margin-top: 4px; }
+
+    /* Stats */
+    .stats {
+      display: flex;
+      gap: 20px;
+      margin-top: 16px;
+    }
+
+    .stat {
+      text-align: center;
+      background: #0d1117;
+      padding: 10px 20px;
+      border-radius: 8px;
+    }
+
+    .stat strong {
+      display: block;
+      font-size: 20px;
+      color: #58a6ff;
+    }
+
+    .stat span {
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    /* Repo List */
+    .repo {
+      background: #0d1117;
+      border: 1px solid #30363d;
+      border-radius: 8px;
+      padding: 14px;
+      margin: 8px 0;
+      text-decoration: none;
+      display: block;
+      transition: border-color 0.2s;
+    }
+
+    .repo:hover { border-color: #58a6ff; }
+
+    .repo-name {
+      color: #58a6ff;
+      font-weight: bold;
+      font-size: 15px;
+    }
+
+    .repo-desc {
+      color: #8b949e;
+      font-size: 13px;
+      margin-top: 4px;
+    }
+
+    .repo-stats {
+      display: flex;
+      gap: 16px;
+      margin-top: 8px;
+      font-size: 12px;
+      color: #8b949e;
+    }
+
+    /* Rate Limit Bar */
+    .rate-bar {
+      height: 8px;
+      background: #30363d;
+      border-radius: 4px;
+      margin-top: 10px;
+      overflow: hidden;
+    }
+
+    .rate-fill {
+      height: 100%;
+      background: #238636;
+      border-radius: 4px;
+      transition: width 0.5s;
+    }
+
+    /* Alerts */
+    .alert {
+      padding: 12px 16px;
+      border-radius: 8px;
+      margin: 10px 0;
+      width: 100%;
+      max-width: 600px;
+    }
+
+    .alert-error {
+      background: rgba(248,81,73,0.15);
+      border: 1px solid #f85149;
+      color: #f85149;
+    }
+
+    .alert-success {
+      background: rgba(35,134,54,0.15);
+      border: 1px solid #238636;
+      color: #3fb950;
+    }
+
+    /* Hidden by default */
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+  <h1>🐙 GitHub Explorer</h1>
+  <p class="subtitle">Search any GitHub user instantly!</p>
+
+  <!-- Login Section -->
+  <div id="login-section">
+    <a href="/auth/github" class="login-btn">
+      🔑 Login with GitHub (OAuth)
+    </a>
+  </div>
+
+  <!-- Alert Messages -->
+  <div id="alert" class="hidden"></div>
+
+  <!-- Search Section -->
+  <div id="search-section" class="hidden">
+    <div class="search-box">
+      <input 
+        id="username" 
+        placeholder="Search GitHub username..." 
+      />
+      <button onclick="searchUser()">Search</button>
+    </div>
+  </div>
+
+  <!-- Profile Section -->
+  <div id="profile-section" class="hidden card">
+  </div>
+
+  <!-- Rate Limit Section -->
+  <div id="ratelimit-section" class="hidden card">
+    <h3>🚦 API Rate Limit</h3>
+    <div id="ratelimit-info"></div>
+    <div class="rate-bar">
+      <div class="rate-fill" id="rate-fill"></div>
+    </div>
+  </div>
+
+  <!-- Repos Section -->
+  <div id="repos-section" class="hidden card">
+    <h3>📁 Repositories</h3>
+    <div id="repos-list"></div>
+  </div>
+
+<script>
+  // Get token from URL after OAuth login
+  let token = '';
+
+  const urlParams = new URLSearchParams(window.location.search);
+  const urlToken = urlParams.get('token');
+  const urlError = urlParams.get('error');
+
+  // ── Handle OAuth callback ──────────────
+  if (urlToken) {
+    token = urlToken;
+    localStorage.setItem('github_token', token);
+    window.history.replaceState({}, '', '/');
+    showLoggedIn();
+    loadMyProfile();
+    checkRateLimit();
+  }
+
+  // ── Restore saved token ────────────────
+  if (localStorage.getItem('github_token')) {
+    token = localStorage.getItem('github_token');
+    showLoggedIn();
+    loadMyProfile();
+    checkRateLimit();
+  }
+
+  // ── Handle errors ──────────────────────
+  if (urlError) {
+    showAlert('Login failed! Please try again.', 'error');
+  }
+
+  // ── Show logged in state ───────────────
+  function showLoggedIn() {
+    document.getElementById('login-section').classList.add('hidden');
+    document.getElementById('search-section').classList.remove('hidden');
+  }
+
+  // ── Show alert messages ────────────────
+  function showAlert(message, type) {
+    const alert = document.getElementById('alert');
+    alert.className = `alert alert-${type}`;
+    alert.textContent = message;
+    alert.classList.remove('hidden');
+
+    // Hide after 4 seconds
+    setTimeout(() => {
+      alert.classList.add('hidden');
+    }, 4000);
+  }
+
+  // ── Load my own profile ────────────────
+  async function loadMyProfile() {
+    try {
+      const response = await fetch('/api/user', {
+        headers: { 
+          'Authorization': `Bearer ${token}` 
+        }
+      });
+
+      // Error handling
+      if (!response.ok) {
+        const err = await response.json();
+        showAlert(err.message, 'error');
+        return;
+      }
+
+      const user = await response.json();
+      showProfile(user);
+
+    } catch (error) {
+      showAlert('No internet connection!', 'error');
+    }
+  }
+
+  // ── Search any user ────────────────────
+  async function searchUser() {
+    const username = document.getElementById('username').value;
+
+    // Error: empty input
+    if (!username.trim()) {
+      showAlert('Please type a username!', 'error');
+      return;
+    }
+
+    try {
+      // Get profile
+      const userRes = await fetch(
+        `/api/repos/${username}`,
+        { headers: { 'Authorization': `Bearer ${token}` } }
+      );
+
+      // Error handling - 404
+      if (userRes.status === 404) {
+        showAlert(`User "${username}" not found!`, 'error');
+        return;
+      }
+
+      // Error handling - 429
+      if (userRes.status === 429) {
+        showAlert('Rate limit exceeded! Wait 15 minutes!', 'error');
+        return;
+      }
+
+      const repos = await userRes.json();
+      showRepos(repos);
+
+      // Also fetch their profile
+      const profileRes = await fetch(
+        `https://api.github.com/users/${username}`
+      );
+      const profile = await profileRes.json();
+      showProfile(profile);
+
+      // Update rate limit
+      checkRateLimit();
+
+    } catch (error) {
+      showAlert('Something went wrong! Check internet!', 'error');
+    }
+  }
+
+  // ── Show profile card ──────────────────
+  function showProfile(user) {
+    const section = document.getElementById('profile-section');
+    section.classList.remove('hidden');
+
+    section.innerHTML = `
+      <div class="profile">
+        <img src="${user.avatar_url}" alt="${user.login}" />
+        <div>
+          <h2>${user.name || user.login}</h2>
+          <p>@${user.login}</p>
+          <p>📍 ${user.location || 'Location unknown'}</p>
+          <p>🏢 ${user.company || 'No company'}</p>
+        </div>
+      </div>
+      <div class="stats">
+        <div class="stat">
+          <strong>${user.public_repos}</strong>
+          <span>Repos</span>
+        </div>
+        <div class="stat">
+          <strong>${user.followers}</strong>
+          <span>Followers</span>
+        </div>
+        <div class="stat">
+          <strong>${user.following}</strong>
+          <span>Following</span>
+        </div>
+      </div>
+    `;
+  }
+
+  // ── Show repos list ────────────────────
+  function showRepos(repos) {
+    const section = document.getElementById('repos-section');
+    section.classList.remove('hidden');
+
+    const list = document.getElementById('repos-list');
+
+    if (repos.length === 0) {
+      list.innerHTML = '<p style="color:#8b949e">No repos found!</p>';
+      return;
+    }
+
+    // Show first 10 repos
+    list.innerHTML = repos.slice(0, 10).map(repo => `
+      <a href="${repo.html_url}" 
+         target="_blank" 
+         class="repo">
+        <div class="repo-name">${repo.name}</div>
+        <div class="repo-desc">
+          ${repo.description || 'No description'}
+        </div>
+        <div class="repo-stats">
+          <span>⭐ ${repo.stargazers_count}</span>
+          <span>🍴 ${repo.forks_count}</span>
+          <span>💻 ${repo.language || 'Unknown'}</span>
+        </div>
+      </a>
+    `).join('');
+  }
+
+  // ── Check rate limit ───────────────────
+  async function checkRateLimit() {
+    try {
+      const response = await fetch('/api/ratelimit', {
+        headers: { 
+          'Authorization': `Bearer ${token}` 
+        }
+      });
+
+      const data = await response.json();
+
+      document.getElementById('ratelimit-section')
+        .classList.remove('hidden');
+
+      const percent = 
+        (data.remaining / data.limit) * 100;
+
+      document.getElementById('ratelimit-info').innerHTML = `
+        <p style="color:#8b949e; margin-top:8px">
+          ✅ ${data.remaining} / ${data.limit} 
+          requests remaining
+        </p>
+      `;
+
+      document.getElementById('rate-fill').style.width = 
+        `${percent}%`;
+
+      // Change color based on remaining
+      const fill = document.getElementById('rate-fill');
+      if (percent < 20) {
+        fill.style.background = '#f85149'; // red
+      } else if (percent < 50) {
+        fill.style.background = '#d29922'; // yellow
+      } else {
+        fill.style.background = '#238636'; // green
+      }
+
+    } catch (error) {
+      console.log('Could not check rate limit');
+    }
+  }
+</script>
+
+</body>
+</html>
